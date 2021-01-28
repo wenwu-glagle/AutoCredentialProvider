@@ -6,6 +6,7 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //
+#pragma once
 
 #include "helpers.h"
 #include <windows.h>
@@ -64,6 +65,16 @@ class CSampleProvider : public ICredentialProvider,
     IFACEMETHODIMP SetUserArray(_In_ ICredentialProviderUserArray *users);
 
     friend HRESULT CSample_CreateInstance(_In_ REFIID riid, _Outptr_ void** ppv);
+
+    HRESULT _EnumerateOneCredentials(
+        _In_ DWORD dwCredentialIndex,
+        _In_ PWSTR pwzUserbame,
+        _In_ PWSTR pwzPassword,
+        _In_ PWSTR pwzDomain
+     );
+
+    ICredentialProviderEvents* _cred_provider_events;
+    UINT_PTR _upAdviseContext;
 
   protected:
     CSampleProvider();

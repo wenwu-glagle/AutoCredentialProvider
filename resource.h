@@ -6,5 +6,5 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //
-
+#pragma once
 #define IDB_TILE_IMAGE     101

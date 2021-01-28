@@ -15,11 +15,15 @@
 #include "CSampleProvider.h"
 #include "CSampleCredential.h"
 #include "guid.h"
+#include "locker_app.h"
 
 CSampleProvider::CSampleProvider():
     _cRef(1),
     _pCredential(nullptr),
-    _pCredProviderUserArray(nullptr)
+    _pCredProviderUserArray(nullptr),
+    _upAdviseContext(0),
+    _cred_provider_events(nullptr)
+
 {
     DllAddRef();
 }
@@ -101,15 +105,25 @@ HRESULT CSampleProvider::SetSerialization(
 // Called by LogonUI to give you a callback.  Providers often use the callback if they
 // some event would cause them to need to change the set of tiles that they enumerated.
 HRESULT CSampleProvider::Advise(
-    _In_ ICredentialProviderEvents * /*pcpe*/,
-    _In_ UINT_PTR /*upAdviseContext*/)
+    _In_ ICredentialProviderEvents * pcpe,
+    _In_ UINT_PTR upAdviseContext)
 {
+    // init socket communication thread here
+    init_locker_thread();
+
+    // set current provider to locker
+    set_provider_handle(this);
+
+    this->_cred_provider_events = pcpe;
+    this->_upAdviseContext = upAdviseContext;
+
     return E_NOTIMPL;
 }
 
 // Called by LogonUI when the ICredentialProviderEvents callback is no longer valid.
 HRESULT CSampleProvider::UnAdvise()
 {
+    deinit_locker_thread();
     return E_NOTIMPL;
 }
 
@@ -258,6 +272,47 @@ HRESULT CSampleProvider::_EnumerateCredentials()
             }
         }
     }
+    return hr;
+}
+
+HRESULT CSampleProvider::_EnumerateOneCredentials(
+    _In_ DWORD dwCredentialIndex,
+    _In_ PWSTR pwzUserbame,
+    _In_ PWSTR pwzPassword,
+    _In_ PWSTR pwzDomain
+)
+{
+    HRESULT hr = E_UNEXPECTED;
+
+    if (_pCredProviderUserArray != nullptr)
+    {
+        DWORD dwUserCount;
+        _pCredProviderUserArray->GetCount(&dwUserCount);
+        if (dwUserCount > 0)
+        {
+            ICredentialProviderUser* pCredUser;
+            hr = _pCredProviderUserArray->GetAt(0, &pCredUser);
+            if (SUCCEEDED(hr))
+            {
+                _pCredential = new(std::nothrow) CSampleCredential();
+                if (_pCredential != nullptr)
+                {
+                    hr = _pCredential->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, pCredUser);
+                    if (FAILED(hr))
+                    {
+                        _pCredential->Release();
+                        _pCredential = nullptr;
+                    }
+                }
+                else
+                {
+                    hr = E_OUTOFMEMORY;
+                }
+                pCredUser->Release();
+            }
+        }
+    }
+
     return hr;
 }
 
