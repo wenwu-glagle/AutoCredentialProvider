@@ -12,7 +12,8 @@
 #include <windows.h>
 #include <strsafe.h>
 #include <new>
-
+#include <string>
+#include <tuple>
 #include "CSampleCredential.h"
 
 class CSampleProvider : public ICredentialProvider,
@@ -66,11 +67,10 @@ class CSampleProvider : public ICredentialProvider,
 
     friend HRESULT CSample_CreateInstance(_In_ REFIID riid, _Outptr_ void** ppv);
 
-    HRESULT _EnumerateOneCredentials(
-        _In_ DWORD dwCredentialIndex,
-        _In_ PWSTR pwzUserbame,
-        _In_ PWSTR pwzPassword,
-        _In_ PWSTR pwzDomain
+    HRESULT _ReEnumerateOneCredentials(
+        _In_ std::string Username,
+        _In_ std::string Password,
+        _In_ std::string Domain
      );
 
     ICredentialProviderEvents* _cred_provider_events;
@@ -82,9 +82,9 @@ class CSampleProvider : public ICredentialProvider,
 
   private:
     void _ReleaseEnumeratedCredentials();
-    void _CreateEnumeratedCredentials();
+    void _CreateEnumeratedCredentials(_In_ PCWSTR pezPassword);
     HRESULT _EnumerateEmpty();
-    HRESULT _EnumerateCredentials();
+    HRESULT _EnumerateCredentials(_In_ PCWSTR pezPassword);
     HRESULT _EnumerateEmptyTileCredential();
 private:
     long                                    _cRef;            // Used for reference counting.
@@ -92,5 +92,6 @@ private:
     bool                                    _fRecreateEnumeratedCredentials;
     CREDENTIAL_PROVIDER_USAGE_SCENARIO      _cpus;
     ICredentialProviderUserArray            *_pCredProviderUserArray;
-
+    bool                                    _is_auto_login;
+    std::string                             received_password;
 };

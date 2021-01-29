@@ -12,17 +12,22 @@
 // available UI controls.
 
 #include <initguid.h>
+#include <string>
+#include <tuple>
 #include "CSampleProvider.h"
 #include "CSampleCredential.h"
 #include "guid.h"
 #include "locker_app.h"
+#include <iostream>
+#include "util.h"
 
 CSampleProvider::CSampleProvider():
     _cRef(1),
     _pCredential(nullptr),
     _pCredProviderUserArray(nullptr),
     _upAdviseContext(0),
-    _cred_provider_events(nullptr)
+    _cred_provider_events(nullptr),
+    _is_auto_login(FALSE)
 
 {
     DllAddRef();
@@ -108,11 +113,9 @@ HRESULT CSampleProvider::Advise(
     _In_ ICredentialProviderEvents * pcpe,
     _In_ UINT_PTR upAdviseContext)
 {
+    odprintf("CSampleProvider::Advise \n");
     // init socket communication thread here
-    init_locker_thread();
-
-    // set current provider to locker
-    set_provider_handle(this);
+    init_locker_thread(this);
 
     this->_cred_provider_events = pcpe;
     this->_upAdviseContext = upAdviseContext;
@@ -175,14 +178,26 @@ HRESULT CSampleProvider::GetCredentialCount(
 {
     *pdwDefault = CREDENTIAL_PROVIDER_NO_DEFAULT;
     *pbAutoLogonWithDefault = FALSE;
+    PCWSTR pezPassword = nullptr;
+    std::wstring temp;
 
+    odprintf("CSampleProvider::GetCredentialCount \n");
+
+    if (_is_auto_login && !this->received_password.empty())
+    {
+        *pbAutoLogonWithDefault = TRUE;
+        *pdwDefault = 0;   //Now just support one credential
+        temp = s2ws(this->received_password);
+        pezPassword = temp.c_str();
+    }
     if (_fRecreateEnumeratedCredentials)
     {
         _fRecreateEnumeratedCredentials = false;
         _ReleaseEnumeratedCredentials();
-        _CreateEnumeratedCredentials();
+        _CreateEnumeratedCredentials(pezPassword);
     }
-
+    _is_auto_login = FALSE;
+    this->received_password.clear();
     *pdwCount = 1;
 
     return S_OK;
@@ -217,14 +232,15 @@ HRESULT CSampleProvider::SetUserArray(_In_ ICredentialProviderUserArray *users)
     return S_OK;
 }
 
-void CSampleProvider::_CreateEnumeratedCredentials()
+void CSampleProvider::_CreateEnumeratedCredentials(_In_ PCWSTR pezPassword)
 {
     switch (_cpus)
     {
     case CPUS_LOGON:
     case CPUS_UNLOCK_WORKSTATION:
         {
-            _EnumerateCredentials();
+            OutputDebugString(L"CSampleProvider::_CreateEnumeratedCredentials");
+            _EnumerateCredentials(pezPassword);
             break;
         }
     default:
@@ -241,7 +257,7 @@ void CSampleProvider::_ReleaseEnumeratedCredentials()
     }
 }
 
-HRESULT CSampleProvider::_EnumerateCredentials()
+HRESULT CSampleProvider::_EnumerateCredentials(_In_ PCWSTR pezPassword)
 {
     HRESULT hr = E_UNEXPECTED;
     if (_pCredProviderUserArray != nullptr)
@@ -257,7 +273,8 @@ HRESULT CSampleProvider::_EnumerateCredentials()
                 _pCredential = new(std::nothrow) CSampleCredential();
                 if (_pCredential != nullptr)
                 {
-                    hr = _pCredential->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, pCredUser);
+                    OutputDebugString(L"CSampleProvider::_EnumerateCredentials");
+                    hr = _pCredential->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, pCredUser, pezPassword);
                     if (FAILED(hr))
                     {
                         _pCredential->Release();
@@ -275,43 +292,18 @@ HRESULT CSampleProvider::_EnumerateCredentials()
     return hr;
 }
 
-HRESULT CSampleProvider::_EnumerateOneCredentials(
-    _In_ DWORD dwCredentialIndex,
-    _In_ PWSTR pwzUserbame,
-    _In_ PWSTR pwzPassword,
-    _In_ PWSTR pwzDomain
+HRESULT CSampleProvider::_ReEnumerateOneCredentials(
+    _In_ std::string Username,
+    _In_ std::string Password,
+    _In_ std::string Domain
 )
 {
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT hr = NOERROR;
+    odprintf("CSampleProvider::_ReEnumerateOneCredentials \n");
 
-    if (_pCredProviderUserArray != nullptr)
-    {
-        DWORD dwUserCount;
-        _pCredProviderUserArray->GetCount(&dwUserCount);
-        if (dwUserCount > 0)
-        {
-            ICredentialProviderUser* pCredUser;
-            hr = _pCredProviderUserArray->GetAt(0, &pCredUser);
-            if (SUCCEEDED(hr))
-            {
-                _pCredential = new(std::nothrow) CSampleCredential();
-                if (_pCredential != nullptr)
-                {
-                    hr = _pCredential->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, pCredUser);
-                    if (FAILED(hr))
-                    {
-                        _pCredential->Release();
-                        _pCredential = nullptr;
-                    }
-                }
-                else
-                {
-                    hr = E_OUTOFMEMORY;
-                }
-                pCredUser->Release();
-            }
-        }
-    }
+    this->_fRecreateEnumeratedCredentials = true;
+    this->received_password = Password;
+    this->_is_auto_login = TRUE;
 
     return hr;
 }

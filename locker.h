@@ -4,7 +4,7 @@
 #include<cstdlib>
 #include<ctime>
 #include<thread>
-
+#include<vector>
 
 #ifdef _WIN32
 
@@ -75,13 +75,14 @@ public:
     //  Get provider handle
     CSampleProvider* get_provider(void);
 
+
 #endif
 
     void enable_locker_auto_login(void);
     void disable_locker_auto_login(void);
 
     //    locker sock thread pointer
-    std::thread* locker_sock_thread;
+    std::thread* plocker_sock_thread;
     
     //    queue for socket rcv msg
     

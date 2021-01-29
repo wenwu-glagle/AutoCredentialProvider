@@ -22,6 +22,7 @@
 #include "common.h"
 #include "dll.h"
 #include "resource.h"
+#include <tuple>
 
 class CSampleCredential : public ICredentialProviderCredential2, ICredentialProviderCredentialWithFieldOptions
 {
@@ -98,12 +99,15 @@ public:
     HRESULT Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
                        _In_ CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR const *rgcpfd,
                        _In_ FIELD_STATE_PAIR const *rgfsp,
-                       _In_ ICredentialProviderUser *pcpUser);
+                       _In_ ICredentialProviderUser *pcpUser,
+                       _In_ PCWSTR pezPassword
+        );
     CSampleCredential();
+    virtual ~CSampleCredential();
 
   private:
 
-    virtual ~CSampleCredential();
+
     long                                    _cRef;
     CREDENTIAL_PROVIDER_USAGE_SCENARIO      _cpus;                                          // The usage scenario for which we were enumerated.
     CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR    _rgCredProvFieldDescriptors[SFI_NUM_FIELDS];    // An array holding the type and name of each field in the tile.

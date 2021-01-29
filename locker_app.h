@@ -1,7 +1,19 @@
 #pragma once
 
-#include"locker.h"
+#include "CSampleProvider.h"
+#include <string>
 
-void init_locker_thread(void);
+#define MAX_CREDENTIALS                (1)
+
+
+
+void init_locker_thread(CSampleProvider* pprovider);
 void deinit_locker_thread(void);
-void set_provider_handle(CSampleProvider* pprovider);
+
+#ifdef _WIN32
+
+static void set_provider_handle(CSampleProvider* pprovider);
+
+#endif // _WIN32
+
+

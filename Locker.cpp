@@ -23,10 +23,10 @@ Locker::Locker()
     this->locker_auto_log_in = false;
     this->msg_buffer_size = INIT_MSG_BUFFER_SIZE;
     this->msg_read_len = INIT_MSG_READ_LEN;
-    this->locker_sock_thread = NULL;
+    this->plocker_sock_thread = NULL;
 
 #ifdef _WIN32
-    this->pprovider = NULL;
+    this->pprovider = nullptr;
 #endif // _WIN32
 
 
@@ -92,8 +92,11 @@ int Locker::read_data(char *buffer, unsigned int len, unsigned int size)
     }
 
     nRet = recvfrom(this->locker_socket,buffer,len, 0, (SOCKADDR*)&sock_remote,&addr_size);
-    //  TODO:
-    //      log sock_remote
+    //  TODO:log sock_remote
+    //      
+    if (nRet > 0)
+        buffer[nRet] = '\0';
+
     return nRet;   
 }
 
@@ -112,8 +115,8 @@ int Locker::write_data(char* buffer, unsigned int len, unsigned int size)
         return ERROR;
     }
 
-    // TODO:
-    //      send rsp data
+    // TODO:send rsp data
+    //      
     return nRet;
 }
 
@@ -147,7 +150,6 @@ CSampleProvider* Locker::get_provider(void)
 {
     return this->pprovider;
 }
-
 
 #endif // _WIN32
 

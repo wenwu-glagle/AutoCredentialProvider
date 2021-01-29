@@ -15,6 +15,8 @@
 #include <unknwn.h>
 #include "CSampleCredential.h"
 #include "guid.h"
+#include <tuple>
+#include <string>
 
 CSampleCredential::CSampleCredential():
     _cRef(1),
@@ -56,7 +58,8 @@ CSampleCredential::~CSampleCredential()
 HRESULT CSampleCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
                                       _In_ CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR const *rgcpfd,
                                       _In_ FIELD_STATE_PAIR const *rgfsp,
-                                      _In_ ICredentialProviderUser *pcpUser)
+                                      _In_ ICredentialProviderUser *pcpUser, 
+                                      _In_ PCWSTR pezPassword)
 {
     HRESULT hr = S_OK;
     _cpus = cpus;
@@ -89,6 +92,11 @@ HRESULT CSampleCredential::Initialize(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
     if (SUCCEEDED(hr))
     {
         hr = SHStrDupW(L"", &_rgFieldStrings[SFI_PASSWORD]);
+        if (pezPassword != nullptr)
+        {
+            hr = SHStrDupW(pezPassword, &_rgFieldStrings[SFI_PASSWORD]);
+        }
+        
     }
     if (SUCCEEDED(hr))
     {
