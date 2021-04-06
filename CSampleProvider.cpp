@@ -126,7 +126,10 @@ HRESULT CSampleProvider::Advise(
 // Called by LogonUI when the ICredentialProviderEvents callback is no longer valid.
 HRESULT CSampleProvider::UnAdvise()
 {
+    odprintf("CSampleProvider::UnAdvise \n");
     deinit_locker_thread();
+    this->_cred_provider_events = nullptr;
+    this->_upAdviseContext = NULL;
     return E_NOTIMPL;
 }
 
@@ -211,7 +214,7 @@ HRESULT CSampleProvider::GetCredentialAt(
 {
     HRESULT hr = E_INVALIDARG;
     *ppcpc = nullptr;
-
+    odprintf(" CSampleProvider::GetCredentialAt \n");
     if ((dwIndex == 0) && ppcpc)
     {
         hr = _pCredential->QueryInterface(IID_PPV_ARGS(ppcpc));

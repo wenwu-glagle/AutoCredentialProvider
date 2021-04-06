@@ -17,6 +17,7 @@
 #include "guid.h"
 #include <tuple>
 #include <string>
+#include "util.h"
 
 CSampleCredential::CSampleCredential():
     _cRef(1),
@@ -332,7 +333,7 @@ HRESULT CSampleCredential::GetSubmitButtonValue(DWORD dwFieldID, _Out_ DWORD *pd
 HRESULT CSampleCredential::SetStringValue(DWORD dwFieldID, _In_ PCWSTR pwz)
 {
     HRESULT hr;
-
+    odprintf("CSampleCredential::SetStringValue\n");
     // Validate parameters.
     if (dwFieldID < ARRAYSIZE(_rgCredProvFieldDescriptors) &&
         (CPFT_EDIT_TEXT == _rgCredProvFieldDescriptors[dwFieldID].cpft ||
@@ -517,7 +518,7 @@ HRESULT CSampleCredential::GetSerialization(_Out_ CREDENTIAL_PROVIDER_GET_SERIAL
     *ppwszOptionalStatusText = nullptr;
     *pcpsiOptionalStatusIcon = CPSI_NONE;
     ZeroMemory(pcpcs, sizeof(*pcpcs));
-
+    odprintf("CSampleCredential::GetSerialization \n");
     // For local user, the domain and user name can be split from _pszQualifiedUserName (domain\username).
     // CredPackAuthenticationBuffer() cannot be used because it won't work with unlock scenario.
     if (_fIsLocalUser)

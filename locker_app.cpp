@@ -18,12 +18,14 @@ static void locker_thread_sock(void)
     std::string Username;
     std::string Password;
     std::string Domain;
-    odprintf("enter locker_thread_sock \n");
+  
     while(locker_thread_sock_running)
        {
+            odprintf("enter locker_thread_sock \n");
             plocker->disable_locker_auto_login();
 
             // will block here since rcvfrom is blocking as default
+            // rcvfrom reading data from internal queue, may cause some error, like the older msg
             if (plocker->read_data(msg_buffer, plocker->msg_read_len, plocker->msg_buffer_size) == SOCKET_ERROR)
             {
                 odprintf("locker_thread_sock read failed!\n");
@@ -33,6 +35,7 @@ static void locker_thread_sock(void)
             {
                 // process the received msg
                 // TODO: filter the msg
+                // TODO: compare current received msg, if is same with previous that failed,drop it and continue
 
                 Password = std::string(msg_buffer);
            
@@ -46,7 +49,7 @@ static void locker_thread_sock(void)
                     continue;
                 }
 
-                //TODO: compare current received msg, if is same with previous that failed,drop it and continue
+                
 
                 pprovider->_ReEnumerateOneCredentials(Username, Password, Domain);
 
