@@ -11,3 +11,7 @@ The demo is based on Microsoft's [CredentialProvider demo](https://github.com/Mi
 ### Run the sample (should be better tested in visual machine)
 1. copy the generated **SampleV2CredentialProvider.dll** to **C:\Windows\System32**
 2. run **register.reg**
+
+### Locker listen on 127.0.0.1:55320
+
+see locker.cpp
